@@ -14,7 +14,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def walkdir(dir, cls=None, suffix='.png') -> List[List[str]]:
+def walkdir(dir, cls=None, suffix='.txt') -> List[List[str]]:
     """Walks through subdirectories and 
     returns a list of file paths and annotations.
     """
@@ -23,8 +23,7 @@ def walkdir(dir, cls=None, suffix='.png') -> List[List[str]]:
         path = osp.join(dir, f)
         if osp.isdir(path):
             anns += walkdir(path, f)
-        elif path.endswith(suffix):
-            assert cls
+        elif path.endswith(suffix) and cls:
             anns[0].append(' '.join([path, cls]))
     return anns
 
