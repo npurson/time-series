@@ -1,8 +1,6 @@
 import os.path as osp
 import numpy as np
 
-from pyts.approximation import DiscreteFourierTransform
-
 
 def sample(input: np.ndarray, src_freq, dst_freq, n_samples=None):
     """
@@ -46,20 +44,30 @@ def read_wavetxt(path):
     with open(path) as f:
         for line in f.readlines():
             line = line.strip()
-            if 'SampleFrequence' in line:
-                freq = int(line[16:])
-            elif 'DataInput' in line:
-                series = np.array(line[10:].split(',')).astype(np.float64)
+            if 'SampleFrequence' in line or 'SampleFrequency' in line:
+                freq = int(line.split('=')[-1])
+            elif 'DataInput' in line or 'CurrentDataInput' in line:
+                inputs = list(filter(lambda x: x != '', line.split('=')[-1].split(',')))
+                series = np.array(inputs).astype(np.float64)
     return (freq, series)
 
 
-def get_dataset(data_root='/home/jhy/repos/time-series/data/nari0516'):
-    CLASSES = (
-        '雷击', '反击', '绕击', '外破', '山火', '施工碰线', '异物短路', '冰害',
-        '覆冰过载', '脱冰跳跃', '舞动', '风偏', '鸟害', '污闪', '其他'
-    )
+class TSData(object):
 
-    def data_pipeline(path):
+    def __init__(self, data_root='/home/jhy/repos/time-series/data/nari0602'):
+        self.CLASSES = (
+            '雷击', '反击', '绕击', '外破', '山火', '施工碰线', '异物短路', '冰害',
+            '冰闪', '覆冰过载', '脱冰跳跃', '舞动', '风偏', '鸟害', '污闪', '其他',
+        )
+        with open(osp.join(data_root, 'train.txt')) as f:
+            self.train_data = [line.strip().split(' ') for line in f.readlines()]
+        with open(osp.join(data_root, 'val.txt')) as f:
+            self.test_data = [line.strip().split(' ') for line in f.readlines()]
+
+        self.cls_map = list(range(len(self.CLASSES)))
+        # self.cls_map = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+    def data_pipeline(self, path):
         freq, x = read_wavetxt(path)
         x = sample(x, freq, 5e5)
         x = x / 5000 if np.max(x) < 5000 else x / np.max(x)
@@ -68,59 +76,17 @@ def get_dataset(data_root='/home/jhy/repos/time-series/data/nari0516'):
         # x = np.vstack((x, xf / np.max(xf)))
         return x
 
-    with open(osp.join(data_root, 'train.txt')) as f:
-        train_data = [line.strip().split(' ') for line in f.readlines()]
-    with open(osp.join(data_root, 'val.txt')) as f:
-        test_data = [line.strip().split(' ') for line in f.readlines()]
-
-    X_train = []
-    y_train = []
-    for path, cls in train_data:
-        x = data_pipeline(path)
-        y = CLASSES.index(cls)
-        X_train.append(x)
-        y_train.append(y)
-
-    X_valid = []
-    y_valid = []
-    for path, cls in test_data:
-        x = data_pipeline(path)
-        y = CLASSES.index(cls)
-        X_valid.append(x)
-        y_valid.append(y)
-    return X_train, y_train, X_valid, y_valid
-
-
-def get_bdataset(data_root='/home/jhy/repos/time-series/data/nari0516'):
-    CLASSES = ('雷击', '非雷击')
-
-    def data_pipeline(path):
-        freq, x = read_wavetxt(path)
-        x = sample(x, freq, 5e5)
-        x = x / 5000 if np.max(x) < 5000 else x / np.max(x)
-        # dft = DiscreteFourierTransform()
-        # xf = dft.fit_transform(x.reshape(1, -1))[0]
-        # x = np.vstack((x, xf / np.max(xf)))
-        return x
-
-    with open(osp.join(data_root, 'train.txt')) as f:
-        train_data = [line.strip().split(' ') for line in f.readlines()]
-    with open(osp.join(data_root, 'val.txt')) as f:
-        test_data = [line.strip().split(' ') for line in f.readlines()]
-
-    X_train = []
-    y_train = []
-    for path, cls in train_data:
-        x = data_pipeline(path)
-        y = CLASSES.index(cls)
-        X_train.append(x)
-        y_train.append(y)
-
-    X_valid = []
-    y_valid = []
-    for path, cls in test_data:
-        x = data_pipeline(path)
-        y = CLASSES.index(cls)
-        X_valid.append(x)
-        y_valid.append(y)
-    return X_train, y_train, X_valid, y_valid
+    def __call__(self):
+        def extract_data(data):
+            X = []; Y = []
+            for path, cls in data:
+                x = self.data_pipeline(path)
+                y = self.CLASSES.index(cls)
+                try:
+                    y = self.cls_map[y]
+                except:
+                    import pdb; pdb.set_trace()
+                X.append(x)
+                Y.append(y)
+            return X, Y
+        return extract_data(self.train_data) + extract_data(self.test_data)

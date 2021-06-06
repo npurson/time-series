@@ -9,13 +9,13 @@ from typing import List
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=str, help='root directory of dataset.')
-    parser.add_argument('-s', '--split', default=0.7, type=float, 
+    parser.add_argument('-s', '--split', default=0.7, type=float,
                         help='ratio of splitting train set and valid set.')
     return parser.parse_args()
 
 
 def walkdir(dir, cls=None, suffix='.txt') -> List[List[str]]:
-    """Walks through subdirectories and 
+    """Walks through subdirectories and
     returns a list of file paths and annotations.
     """
     anns = [[]]
@@ -35,6 +35,10 @@ def split_data(root, split=0.7):
         for ann in anns:
             random.shuffle(ann)
             spt = int(split * len(ann))
+            if spt == 0 and len(ann) != 0:
+                spt += 1
+            if spt == len(ann) and len(ann) != 0:
+                spt -= 1
             traintxt.writelines([line + '\n' for line in ann[:spt]])
             valtxt.writelines([line + '\n' for line in ann[spt:]])
 
