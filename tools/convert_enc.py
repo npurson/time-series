@@ -19,7 +19,7 @@ def walkdir(dir, suffix='.txt'):
 if __name__ == '__main__':
     paths = walkdir('data/nari0602')
     for path in paths:
-        if not 'FFCurrIn' in path:
+        if 'FFCurrIn' not in path:
             continue
         with open(path, encoding='gbk') as f:
             c = f.read()

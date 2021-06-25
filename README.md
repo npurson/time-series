@@ -1,4 +1,4 @@
-# Time Series
+# Time Series Classification
 
 A time series classification library based on PyTorch, proposed by Dian AI Group.
 
@@ -12,6 +12,9 @@ A time series classification library based on PyTorch, proposed by Dian AI Group
 - [ ] Pretrained on larger dataset
 - [ ] Few-shot learning: pretrained feature encoder + distance metric
 - [ ] ?
+
+## Deployment
+
 
 ## License
 

@@ -67,21 +67,22 @@ def main():
         freq, ts = read_wavetxt('/home/jhy/repos/time-series/' + d[0])
         ts = sample(ts, freq, 5e5)
 
-        fig, axs = plt.subplots(2, 2)
-        axs[0, 0].plot(range(len(ts)), ts)
-        tf = DiscreteFourierTransform()
-        msp = tf.fit_transform(ts.reshape(1, -1))
+        fig, axs = plt.subplots(4, 1)
+        
+        # axs[0, 0].plot(range(len(ts)), ts)
+        # tf = DiscreteFourierTransform()
+        # msp = tf.fit_transform(ts.reshape(1, -1))
 
-        axs[0, 1].plot(range(len(msp[0])), msp[0])
-        gaf = GramianAngularField(image_size=224, method='summation')
-        axs[1, 0].imshow(gaf.fit_transform(ts.reshape(1, -1))[0])
+        # axs[0, 1].plot(range(len(msp[0])), msp[0])
+        # gaf = GramianAngularField(image_size=224, method='summation')
+        # axs[1, 0].imshow(gaf.fit_transform(ts.reshape(1, -1))[0])
 
         # img = plt.imshow(gaf.fit_transform(ts.reshape(1, -1))[0])
         # img = img.make_image(renderer=None)[0]
         # from PIL import Image
         # img = Image.fromarray(img[::-1, :, :3])
 
-        axs[1, 1].imshow(gaf.fit_transform(msp.reshape(1, -1))[0])
+        # axs[1, 1].imshow(gaf.fit_transform(msp.reshape(1, -1))[0])
         # plt.show()
         plt.savefig('/home/jhy/repos/time-series/' + d[0].split('/')[-1][:-4] + '.jpg')
 

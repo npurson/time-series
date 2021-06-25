@@ -21,6 +21,7 @@ def sample(input: np.ndarray, src_freq, dst_freq, n_samples=None):
 
     assert src_freq >= dst_freq
     output = input[::int(src_freq / dst_freq)]
+    # from scipy.interpolate import interp1d
     # f = interp1d(list(range(len(input))), input, kind='cubic')
     # output = f(np.linspace(0, len(input) - 1, num=int(len(input) * dst_freq / src_freq)))
 
@@ -44,9 +45,9 @@ def read_wavetxt(path):
     with open(path) as f:
         for line in f.readlines():
             line = line.strip()
-            if 'SampleFrequence' in line or 'SampleFrequency' in line:
+            if 'SampleFrequence' in line or 'SampleFrequency' in line or 'sampleRate' in line:
                 freq = int(line.split('=')[-1])
-            elif 'DataInput' in line or 'CurrentDataInput' in line:
+            elif 'DataInput' in line or 'CurrentDataInput' in line or 'waveData' in line:
                 inputs = list(filter(lambda x: x != '', line.split('=')[-1].split(',')))
                 series = np.array(inputs).astype(np.float64)
     return (freq, series)
@@ -54,22 +55,26 @@ def read_wavetxt(path):
 
 class TSData(object):
 
-    def __init__(self, data_root='/home/jhy/repos/time-series/data/nari0602'):
+    def __init__(self, data_root='/home/jhy/repos/time-series/data/nari0602', n_samples=5e5):
         self.CLASSES = (
             '雷击', '反击', '绕击', '外破', '山火', '施工碰线', '异物短路', '冰害',
             '冰闪', '覆冰过载', '脱冰跳跃', '舞动', '风偏', '鸟害', '污闪', '其他',
+            '非雷击'
         )
+        self.n_samples = n_samples
         with open(osp.join(data_root, 'train.txt')) as f:
             self.train_data = [line.strip().split(' ') for line in f.readlines()]
         with open(osp.join(data_root, 'val.txt')) as f:
             self.test_data = [line.strip().split(' ') for line in f.readlines()]
 
-        self.cls_map = list(range(len(self.CLASSES)))
-        # self.cls_map = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        # self.cls_map = list(range(len(self.CLASSES)))
+        # self.cls_map = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1]
+        self.cls_map = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, None, 1]
+        self.classes = [self.CLASSES[c] for c in set(self.cls_map) if c is not None]
 
-    def data_pipeline(self, path):
+    def data_pipeline(self, path, n_samples):
         freq, x = read_wavetxt(path)
-        x = sample(x, freq, 5e5)
+        x = sample(x, freq, n_samples)
         x = x / 5000 if np.max(x) < 5000 else x / np.max(x)
         # dft = DiscreteFourierTransform()
         # xf = dft.fit_transform(x.reshape(1, -1))[0]
@@ -80,12 +85,11 @@ class TSData(object):
         def extract_data(data):
             X = []; Y = []
             for path, cls in data:
-                x = self.data_pipeline(path)
+                x = self.data_pipeline(path, n_samples=self.n_samples)
                 y = self.CLASSES.index(cls)
-                try:
-                    y = self.cls_map[y]
-                except:
-                    import pdb; pdb.set_trace()
+                y = self.cls_map[y]
+                if y is None:
+                    continue
                 X.append(x)
                 Y.append(y)
             return X, Y
