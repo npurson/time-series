@@ -1,6 +1,7 @@
 import requests
 import datetime
 import json
+import time
 
 import numpy as np
 import torch
@@ -37,7 +38,7 @@ def preprocess(x, f):
 t_pre = '1949-10-01'
 
 
-def get_data(url, auth) -> Generator:
+def get_data(url, auth):
     global t_pre
     t_cur = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     r = requests.get(url, auth=auth, params={'strtime': t_pre, 'endtime': t_cur})
@@ -54,9 +55,12 @@ def get_data(url, auth) -> Generator:
 
 
 def put_pred(url, auth, acciid, pred):
-    r = requests.put(url, auth=auth, params={'acciId': acciid, 'inteliDiagnosis': pred})
+    headers = {"content-type":"application/json"}
+    r = requests.put(url, auth=auth, headers=headers, data=json.dumps([{'acciId': acciid, 'inteliDiagnosis': pred}]))
     if r.status_code != 200:
-        print(f'GET returns {r.status_code}')
+        print(f'PUT returns {r.status_code}')
+    elif json.loads(r.text)['status'] != 200:
+        print(f'PUT returns data status {json.loads(r.text)['status']}')
 
 
 def main():
@@ -68,14 +72,15 @@ def main():
 
     model = InceptionTimeXLPlus(1, 2)
     CLASSES = ('雷击', '非雷击')
-    model.load_state_dict(torch.load('save/icptxlp_cb.pt', map_location='cpu'))
+    model.load_state_dict(torch.load('save/icptxlp_e60_2cls.pt', map_location='cpu'))
+    model.eval()
+    print('Model loaded')
 
     prev_acciid = None
     p = None
 
     while (True):
         data = get_data(get_url, auth)
-        print(data)
         if not data:
             continue
         bar = tqdm(data)
@@ -93,7 +98,8 @@ def main():
                 p = model(x)
             else:
                 p += model(x)
-        time.sleep(1)
+            prev_acciid = acciid
+        time.sleep(30)
 
 
 if __name__ == '__main__':
