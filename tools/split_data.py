@@ -35,10 +35,10 @@ def split_data(root, split=0.7):
         for ann in anns:
             random.shuffle(ann)
             spt = int(split * len(ann))
-            # if spt == 0 and len(ann) != 0:
-            #     spt += 1
-            # if spt == len(ann) and len(ann) != 0:
-            #     spt -= 1
+            if spt == 0 and len(ann) != 0:
+                spt += 1
+            if spt == len(ann) and len(ann) != 0:
+                spt -= 1
             traintxt.writelines([line + '\n' for line in ann[:spt]])
             valtxt.writelines([line + '\n' for line in ann[spt:]])
 

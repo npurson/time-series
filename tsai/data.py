@@ -55,7 +55,7 @@ def read_wavetxt(path):
 
 class TSData(object):
 
-    def __init__(self, data_root='/home/jhy/repos/time-series/data/nari0602', n_samples=5e5):
+    def __init__(self, data_root='/home/jhy/repos/timeseries/data/nari0602', n_samples=5e5):
         self.CLASSES = (
             '雷击', '反击', '绕击', '外破', '山火', '施工碰线', '异物短路', '冰害',
             '冰闪', '覆冰过载', '脱冰跳跃', '舞动', '风偏', '鸟害', '污闪', '其他',
@@ -69,7 +69,9 @@ class TSData(object):
 
         # self.cls_map = list(range(len(self.CLASSES)))
         # self.cls_map = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1]
-        self.cls_map = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, None, 1]
+        # self.cls_map = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, None, 1]
+        # self.cls_map = [0, 0, 0, 15, 15, 15, 6, 15, 15, 15, 15, 15, 12, 13, 15, 15, 15]
+        self.cls_map = [0, 0, 0, None, None, None, 6, None, None, None, None, None, 12, 13, None, None, None]
         self.classes = [self.CLASSES[c] for c in set(self.cls_map) if c is not None]
 
     def data_pipeline(self, path, n_samples):

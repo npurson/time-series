@@ -1,6 +1,5 @@
 import argparse
 import itertools
-from os import X_OK
 import torch
 import matplotlib.pyplot as plt
 
@@ -44,23 +43,30 @@ def plot_confusion_matrix(cm, classes, normalize=False):
 
 def main(args):
 
-    tsdata = TSData('/home/jhy/repos/time-series/data/nari0616')
-    X_train, y_train, X_valid, y_valid = tsdata()
+    # tsdata = TSData('/home/jhy/repos/timeseries/data/nari0707')
+    # X_train, y_train, X_valid, y_valid = tsdata()
 
-    # tsdata = TSData('/home/jhy/repos/time-series/data/nari0823')
+    # tsdata = TSData('/home/jhy/repos/timeseries/data/nari0616')
     # X_train2, y_train2, X_valid2, y_valid2 = tsdata()
     # X_train += X_train2
     # y_train += y_train2
     # X_valid += X_valid2
     # y_valid += y_valid2
 
-    tsdata = TSData('/home/jhy/repos/time-series/data/nari0602')
-    X_train2, y_train2, X_valid2, y_valid2 = tsdata()
-    X_train += X_train2
-    y_train += y_train2
-    X_valid += X_valid2
-    y_valid += y_valid2
+    # tsdata = TSData('/home/jhy/repos/timeseries/data/nari0823')
+    # X_train2, y_train2, X_valid2, y_valid2 = tsdata()
+    # X_train += X_train2
+    # y_train += y_train2
+    # X_valid += X_valid2
+    # y_valid += y_valid2
 
+    tsdata = TSData('/home/jhy/repos/timeseries/data/nari0602')
+    X_train, y_train, X_valid, y_valid = tsdata()
+    # X_train2, y_train2, X_valid2, y_valid2 = tsdata()
+    # X_train += X_train2
+    # y_train += y_train2
+    # X_valid += X_valid2
+    # y_valid += y_valid2
 
     print(f'Train count: {Counter(y_train)}')
     print(f'Valid count: {Counter(y_valid)}')
@@ -88,15 +94,17 @@ def main(args):
     valid_dl = TSDataLoader(valid_ds, num_workers=4, bs=32, drop_last=False)
     dls = TSDataLoaders(train_dl, valid_dl, device=torch.device('cuda:0'))
 
-    model = InceptionTimeXLPlus(1, len(tsdata.classes))
+    model = InceptionTimeXLPlus(1, len(tsdata.CLASSES))
     # model = xresnet1d50_deeperplus(1, len(tsdata.classes))
+    # model = InceptionTimeXLPlus(1, 2)
     # for param in model.backbone.parameters():
     #     param.requires_grad = False
     if args.load:
         model.load_state_dict(torch.load('save/' + args.load))
+        # model.head = InceptionTimeXLPlus(1, len(tsdata.CLASSES)).head
 
     lr = Learner(dls, model, metrics=accuracy, loss_func=nn.CrossEntropyLoss())
-    lr.fit_one_cycle(80, lr_max=5e-3)
+    lr.fit_one_cycle(20, lr_max=5e-3)
 
     if args.save:
         torch.save(model.state_dict(), 'save/' + args.save)
